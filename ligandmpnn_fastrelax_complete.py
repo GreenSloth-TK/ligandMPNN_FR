@@ -289,7 +289,7 @@ def get_worker_config(num_structures, args):
 def setup_ligandmpnn():
     """Setup LigandMPNN model and dependencies"""
     # Add LigandMPNN to path
-    ligandmpnn_path = '/apps/repos/LigandMPNN'
+    ligandmpnn_path = os.environ.get('LMPNN_DIR', '/apps/repos/LigandMPNN')
     if ligandmpnn_path not in sys.path:
         sys.path.insert(0, ligandmpnn_path)
     
