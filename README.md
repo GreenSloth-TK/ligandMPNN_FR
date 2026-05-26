@@ -1,8 +1,8 @@
 # Iterative LigandMPNN-FastRelax for Backbone Optimization
 
-**Author:** David Hyunyoo Jang  
+**Authors:** David Hyunyoo Jang, TaeKwon Lee  
 **Affiliation:** [Artificial Intelligence Protein Design Lab](https://sites.google.com/view/aipdlab)  
-**Date:** July 2025
+**Date:** May 2026
 
 ## Overview
 
@@ -56,6 +56,12 @@ pip install pyrosetta-*.whl
 ```
 
 > See [pyrosetta.org](https://www.pyrosetta.org/home/licensing-pyrosetta) for license and download instructions.
+
+> **Note — `--pyrosetta_threads` build requirement:**  
+> The `--pyrosetta_threads` option requires the **`cxx11thread.serialization`** build of PyRosetta
+> (not the default `release` wheel).  
+> Download: https://west.rosettacommons.org/pyrosetta/quarterly/release.cxx11thread.serialization/  
+> The standard `release` build will silently ignore the threading flags.
 
 ## Key Improvements from Original Implementation
 
@@ -231,8 +237,7 @@ def extract_dist_cst_from_pdb(pdb_in, lig_tr_atms, bsite_res=''):
 ### Performance Features
 
 - **Parallel Processing**: Multiple structures relaxed simultaneously using multiprocessing
-- **Multithreading**: Configurable thread allocation per PyRosetta process
-      need to fix!
+- **Multithreading**: Configurable thread allocation per PyRosetta process (requires PyRosetta ≥ 2026.3 quarterly release; see Installation note above)
 - **GPU Acceleration**: LigandMPNN inference on CUDA
 - **Vectorized Operations**: NumPy-based calculations
 
@@ -251,7 +256,7 @@ Most improvements occur within the first 10-15 cycles.
 
 **Common Issues:**
 1. **Memory errors**: Reduce `--num_processes` or `--pyrosetta_threads`
-2. **Version of pyrosetta**: Multithreading issues
+2. **`--pyrosetta_threads` has no effect**: Requires the **`cxx11thread.serialization`** build of PyRosetta. The standard `release` wheel does not support the multithreading init flags regardless of version. Download from https://west.rosettacommons.org/pyrosetta/quarterly/release.cxx11thread.serialization/ and reinstall via `pip install pyrosetta-*.whl`.
 3. **Missing ligand**: Verify `.params` file path and format
 4. **Poor optimization**: Try different `--temperature` values (0.05-0.3)
 

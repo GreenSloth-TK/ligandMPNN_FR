@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Local LPMO extension (not distributed with this repo)
+ligmpnn_fr_lpmo/
+
+# Pipeline run outputs
+test_output/
