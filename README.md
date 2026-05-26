@@ -1,8 +1,6 @@
 # Iterative LigandMPNN-FastRelax for Backbone Optimization
 
-**Authors:** David Hyunyoo Jang, TaeKwon Lee  
-**Affiliation:** [Artificial Intelligence Protein Design Lab](https://sites.google.com/view/aipdlab)  
-**Date:** May 2026
+*Artificial Intelligence Protein Design Lab*
 
 ## Overview
 
