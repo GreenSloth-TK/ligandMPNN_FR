@@ -6,7 +6,7 @@ import random
 import numpy as np
 import torch
 
-from pipeline import LigandMPNNFastRelax
+from .pipeline import LigandMPNNFastRelax
 
 
 def parse_arguments(args=None):
@@ -22,8 +22,10 @@ def parse_arguments(args=None):
                         help='Output folder path')
     
     # Model settings
-    parser.add_argument('--path_to_model_weights', type=str, default='/apps/repos/LigandMPNN/model_params/',
-                        help='Path to model weights')
+    import os
+    default_weights = os.path.join(os.environ.get('LMPNN_DIR', ''), 'model_params') or None
+    parser.add_argument('--path_to_model_weights', type=str, default=default_weights,
+                        help='Path to model weights (defaults to $LMPNN_DIR/model_params)')
     parser.add_argument('--model_name', type=str, default='ligandmpnn_v_32_010_25',
                         help='Model name')
     parser.add_argument('--checkpoint_path', type=str, default=None,
@@ -78,6 +80,11 @@ def parse_arguments(args=None):
                         help='Number of processes for fast relax (default: 1)')
     parser.add_argument('--pyrosetta_threads', type=int, default=1,
                         help='Number of threads per PyRosetta process (default: 1)')
+    parser.add_argument('--relax_mode', type=str, default='fastrelax',
+                        choices=['fastrelax', 'score_only'],
+                        help='Relaxation mode: full FastRelax or score-only smoke test')
+    parser.add_argument('--relax_timeout', type=int, default=0,
+                        help='Seconds before a relaxation worker is terminated; 0 disables timeout')
 
     # Side chain packing parameters
     parser.add_argument('--number_of_packs_per_design', type=int, default=1,

@@ -17,28 +17,45 @@ This implementation extends the original LigandMPNN-FR concept (Gyu Rie Lee, 202
 
 ## Installation
 
-### Environment Setup
+### Prerequisites
+
+- [Conda](https://docs.conda.io/en/latest/) or [Mamba](https://mamba.readthedocs.io/)
+- CUDA 12.4-compatible GPU
+- [LigandMPNN](https://github.com/dauparas/LigandMPNN) repository (cloned separately)
+- PyRosetta license ([free for academic use](https://www.pyrosetta.org/home/licensing-pyrosetta))
+
+### 1. Clone this repository
 
 ```bash
-# Create conda environment with required dependencies
-mamba create -n ligmpnn-fr -y \
-    -c nvidia -c pytorch -c conda-forge \
-    python=3.12 \
-    pytorch pytorch-cuda=12.4 \
-    numpy scipy pandas \
-    openbabel \
-    biopython prody ml-collections dm-tree
+git clone <this-repo-url>
+cd ligandMPNN_FR
+```
 
+### 2. Clone LigandMPNN
+
+```bash
+git clone https://github.com/dauparas/LigandMPNN.git
+export LMPNN_DIR="$(pwd)/LigandMPNN"   # or set a permanent path in your shell profile
+```
+
+### 3. Create conda environment
+
+```bash
+bash scripts/install_env.sh
 conda activate ligmpnn-fr
 ```
 
-### Core Dependencies Installation
+This script creates the `ligmpnn-fr` environment from `environment.yaml` and applies a NumPy compatibility fix required by LigandMPNN's bundled `openfold` library (Python 3.12 requires NumPy ≥ 1.26, which removed legacy aliases such as `np.int`).
+
+### 4. Install PyRosetta
+
+PyRosetta requires a separate license. After obtaining one, install the wheel into the activated environment:
 
 ```bash
-# 1. LigandMPNN
-# 2. PyRosetta
-# 3. This repository
+pip install pyrosetta-*.whl
 ```
+
+> See [pyrosetta.org](https://www.pyrosetta.org/home/licensing-pyrosetta) for license and download instructions.
 
 ## Key Improvements from Original Implementation
 
@@ -97,7 +114,7 @@ Input: Protein-ligand complex PDB + ligand parameters
 ### Quick Start
 
 ```bash
-python ligandmpnn_fastrelax_complete.py \
+python -m ligmpnn_fr \
     --pdb_path protein_ligand_complex.pdb \
     --ligand_params_path ligand.params \
     --out_folder output_directory \
@@ -114,7 +131,7 @@ See `example/` directory for sample input files and analysis scripts:
 
 ```bash
 # Standard optimization with 8 cycles
-python ligandmpnn_fastrelax_complete.py \
+python -m ligmpnn_fr \
     --pdb_path complex.pdb \
     --ligand_params_path ligand.params \
     --out_folder results \
@@ -128,7 +145,7 @@ python ligandmpnn_fastrelax_complete.py \
 
 ```bash
 # High-throughput optimization with parallel processing
-python ligandmpnn_fastrelax_complete.py \
+python -m ligmpnn_fr \
     --pdb_path complex.pdb \
     --ligand_params_path ligand.params \
     --out_folder results \

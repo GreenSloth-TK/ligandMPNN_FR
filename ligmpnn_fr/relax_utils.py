@@ -4,9 +4,9 @@ import os
 import tempfile
 from multiprocessing import cpu_count
 
-from gen_prot_lig_dist_cst import extract_dist_cst_from_pdb
-from hbonds import calc_hb
-from xml_relax_after_ligMPNN import XML_BSITE_FASTRELAX
+from .gen_prot_lig_dist_cst import extract_dist_cst_from_pdb
+from .hbonds import calc_hb
+from .xml_relax_after_ligMPNN import XML_BSITE_FASTRELAX
 
 
 def fast_relax_worker(input_data):
@@ -15,10 +15,17 @@ def fast_relax_worker(input_data):
     Each process gets its own PyRosetta instance and uses minimal threading
     Extracts key metrics: ddg, cms, totalscore
     """
-    pdb_path, output_path, ligand_params_path, use_genpot, verbose, pyrosetta_threads, repackable_res, target_atm_for_cst, hb_atoms = input_data
+    if len(input_data) == 10:
+        pdb_path, output_path, ligand_params_path, use_genpot, verbose, pyrosetta_threads, repackable_res, target_atm_for_cst, hb_atoms, relax_mode = input_data
+    else:
+        pdb_path, output_path, ligand_params_path, use_genpot, verbose, pyrosetta_threads, repackable_res, target_atm_for_cst, hb_atoms = input_data
+        relax_mode = 'fastrelax'
     try:
         import pyrosetta
         from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
+
+        if verbose:
+            print(f"[relax-worker] init PyRosetta for {pdb_path}", flush=True)
 
         # Improved init flags - use flexible threading
         init_flags = ['-beta', '-mute all']  # Always mute to reduce log spam
@@ -42,9 +49,41 @@ def fast_relax_worker(input_data):
         pyrosetta.init(' '.join(init_flags))
 
         # Load pose
+        if verbose:
+            print(f"[relax-worker] loading pose: {pdb_path}", flush=True)
         pose = pyrosetta.pose_from_pdb(pdb_path)
         if pose.total_residue() == 0:
             raise ValueError("Empty pose loaded")
+
+        if relax_mode == 'score_only':
+            if verbose:
+                print("[relax-worker] score_only mode: skipping RosettaScripts FastRelax", flush=True)
+            from pyrosetta.rosetta.core.scoring import get_score_function
+            scorefxn = get_score_function()
+            total_energy = scorefxn(pose)
+            metrics = {
+                'totalscore': total_energy,
+                'ddg': total_energy,
+                'cms': 0.0,
+                'res_totalscore': total_energy / pose.total_residue(),
+                'ddg_after_relax_cst': total_energy,
+            }
+            hb_d = {'total_hb': 0}
+            if hb_atoms:
+                try:
+                    hb_d = calc_hb(pose, len(pose), hb_atoms)
+                    hb_d['total_hb'] = sum(hb_d.values())
+                except Exception:
+                    hb_d = {'total_hb': 0}
+            metrics.update(hb_d)
+            pose.dump_pdb(output_path)
+            return {
+                'success': True,
+                'input_path': pdb_path,
+                'output_path': output_path,
+                'error': None,
+                'metrics': metrics,
+            }
 
         # Generate distance constraints if target atoms specified
         cst_file_path = None
@@ -101,11 +140,17 @@ def fast_relax_worker(input_data):
         metrics = {}
         try:
             # Parse and run XML script
+            if verbose:
+                print("[relax-worker] parsing RosettaScripts XML", flush=True)
             objs = XmlObjects.create_from_file(xml_file_path)
             
             # Apply the protocol
             protocol = objs.get_mover('ParsedProtocol')
+            if verbose:
+                print("[relax-worker] applying RosettaScripts protocol", flush=True)
             protocol.apply(pose)
+            if verbose:
+                print("[relax-worker] RosettaScripts protocol finished", flush=True)
             #apply 이후, pose는 relaxed 상태.
 
             # Extract comprehensive metrics
@@ -152,13 +197,15 @@ def fast_relax_worker(input_data):
                 metrics['ddg_after_relax_cst'] = total_energy
            
             # Get hydrogen bond metrics
-            try:
-                hb_d = calc_hb(pose, len(pose), hb_atoms)
-                total_hb = sum(hb_d.values())
-                hb_d['total_hb'] = total_hb
+            hb_d = {'total_hb': 0}
+            if hb_atoms:
+                try:
+                    hb_d = calc_hb(pose, len(pose), hb_atoms)
+                    total_hb = sum(hb_d.values())
+                    hb_d['total_hb'] = total_hb
 
-            except Exception as e:
-                hb_d = {'total_hb': 0}
+                except Exception as e:
+                    hb_d = {'total_hb': 0}
             metrics.update(hb_d)
                     
         finally:

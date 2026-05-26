@@ -1,5 +1,5 @@
 import sys
-from ligandmpnn_fastrelax_complete import parse_arguments, main
+from inference import parse_arguments, main
 from tqdm import tqdm
 import os
 import pandas as pd
@@ -41,12 +41,11 @@ for idx, row in tqdm(df.iterrows(), total=len(df)):
     if 'af3' in tag: model = 'af3'
     elif 'boltz' in tag: model = 'boltz'
     # ligand_params_path = mapping['ligand_params_path'][model][lig_name]
-    ligand_params_path = f'/home/hwjang/aipd/250729/5_cif_to_mol2/params/{tag}.params'
+    ligand_params_path = mapping['ligand_params_path'][model][lig_name]
     target_atm_for_cst = mapping['target_atm_for_cst'][model][lig_name]
     out_folder = f"{lig_name}_fastrelax"
     cmd = (
-        f"python /home/hwjang/aipd/ligandMPNN_FR/ligandmpnn_fastrelax_complete.py "
-        f"--path_to_model_weights /home/hwjang/aipd/LigandMPNN/model_params "
+        f"python -m ligmpnn_fr "
         f"--pdb_path {pdb_path} "
         f"--ligand_params_path {ligand_params_path} "
         f"--out_folder {out_folder} "

@@ -339,3 +339,12 @@ class LigandMPNNInferenceMixin:
         except Exception as e:
             if self.args.verbose:
                 print(f"Warning: Backbone writing failed: {e}")
+
+
+def parse_arguments(args=None):
+    """CLI argument parser entry point."""
+    from cli import parse_arguments as _parse_arguments
+
+    return _parse_arguments(args)
+
+

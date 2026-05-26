@@ -7,7 +7,13 @@ import sys
 def setup_ligandmpnn():
     """Setup LigandMPNN model and dependencies"""
     # Add LigandMPNN to path
-    ligandmpnn_path = os.environ.get('LMPNN_DIR', '/apps/repos/LigandMPNN')
+    ligandmpnn_path = os.environ.get('LMPNN_DIR')
+    if not ligandmpnn_path:
+        raise EnvironmentError(
+            "LMPNN_DIR environment variable is not set. "
+            "Set it to the path of your LigandMPNN repository, e.g.:\n"
+            "  export LMPNN_DIR=/path/to/LigandMPNN"
+        )
     if ligandmpnn_path not in sys.path:
         sys.path.insert(0, ligandmpnn_path)
     

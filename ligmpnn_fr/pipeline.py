@@ -2,12 +2,12 @@
 
 import torch
 
-from inference import LigandMPNNInferenceMixin
-from model_loading import ModelLoadingMixin
-from mpnn_setup import setup_ligandmpnn, setup_pyrosetta
-from relaxation import RelaxationMixin
-from selection import SelectionMixin
-from workflow import WorkflowMixin
+from .inference import LigandMPNNInferenceMixin
+from .model_loading import ModelLoadingMixin
+from .mpnn_setup import setup_ligandmpnn, setup_pyrosetta
+from .relaxation import RelaxationMixin
+from .selection import SelectionMixin
+from .workflow import WorkflowMixin
 
 
 class LigandMPNNFastRelax(

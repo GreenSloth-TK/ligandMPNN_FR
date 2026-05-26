@@ -54,7 +54,7 @@ class ModelLoadingMixin:
         
         if not checkpoint_path_sc:
             # Use default path structure like run.py
-            model_folder = getattr(self.args, 'path_to_model_weights', '/apps/repos/LigandMPNN/')
+            model_folder = getattr(self.args, 'path_to_model_weights', None) or os.environ.get('LMPNN_DIR', '')
             if model_folder[-1] != '/':
                 model_folder += '/'
             checkpoint_path_sc = f"{model_folder}ligandmpnn_sc_v_32_002_16.pt"
