@@ -46,8 +46,14 @@ def parse_arguments(args=None):
                         help='List of residues to keep fixed')
     parser.add_argument('--redesigned_residues', type=str, nargs='*', default=[],
                         help='List of residues to redesign')
-    parser.add_argument('--omit_AAs', type=str, default='X',
-                        help='Amino acids to omit')
+    parser.add_argument('--omit_AA', type=str, default='X',
+                        help='Amino acids to omit (e.g. "CP")')
+    parser.add_argument('--bias_AA', type=str, default='',
+                        help='Global AA bias, e.g. "A:-1.0,P:2.3,C:-12.0"')
+    parser.add_argument('--bias_AA_per_residue', type=str, default='',
+                        help='Path to JSON: {"A12": {"G": -0.3, "C": -2.0}}')
+    parser.add_argument('--omit_AA_per_residue', type=str, default='',
+                        help='Path to JSON: {"A12": "PG", "A13": "QST"}')
     
     # PyRosetta settings
     parser.add_argument('--use_genpot', action='store_true',

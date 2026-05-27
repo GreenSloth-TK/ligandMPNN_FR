@@ -1,5 +1,7 @@
 """LigandMPNN sequence generation and structure writing."""
 
+import json
+
 import numpy as np
 import torch
 
@@ -88,16 +90,47 @@ class LigandMPNNInferenceMixin:
         
         B, L, _, _ = feature_dict["X"].shape
 
-        # Set bias in feature_dict as done in successful simple version
         omit_AA = torch.tensor(
-            np.array([AA in self.args.omit_AAs for AA in self.alphabet]).astype(np.float32),
+            np.array([AA in self.args.omit_AA for AA in self.alphabet]).astype(np.float32),
             device=self.device
         )
-        bias_AA = torch.zeros(len(self.alphabet), device=self.device)
 
-        # Create per-residue omit and bias (zeros for now)
-        omit_AA_per_residue = torch.zeros([L, 21], device=self.device)
+        # Global AA bias (--bias_AA, format: "A:-1.0,P:2.3")
+        bias_AA = torch.zeros(len(self.alphabet), device=self.device)
+        bias_AA_str = getattr(self.args, 'bias_AA', '')
+        if bias_AA_str:
+            for item in bias_AA_str.split(','):
+                aa, val = item.split(':')
+                bias_AA[self.restype_str_to_int[aa.strip()]] = float(val)
+
+        # Build residue index map for per-residue lookups
+        encoded_residue_dict = dict(zip(encoded_residues, range(len(encoded_residues))))
+
+        # Per-residue bias (--bias_AA_per_residue, JSON: {"A12": {"G": -0.3}})
         bias_AA_per_residue = torch.zeros([L, 21], device=self.device)
+        bias_per_res_path = getattr(self.args, 'bias_AA_per_residue', '')
+        if bias_per_res_path:
+            with open(bias_per_res_path) as fh:
+                bias_dict = json.load(fh)
+            for res, aa_vals in bias_dict.items():
+                if res in encoded_residue_dict:
+                    i1 = encoded_residue_dict[res]
+                    for aa, val in aa_vals.items():
+                        if aa in self.alphabet:
+                            bias_AA_per_residue[i1, self.restype_str_to_int[aa]] = float(val)
+
+        # Per-residue omit (--omit_AA_per_residue, JSON: {"A12": "PG"})
+        omit_AA_per_residue = torch.zeros([L, 21], device=self.device)
+        omit_per_res_path = getattr(self.args, 'omit_AA_per_residue', '')
+        if omit_per_res_path:
+            with open(omit_per_res_path) as fh:
+                omit_dict = json.load(fh)
+            for res, aas in omit_dict.items():
+                if res in encoded_residue_dict:
+                    i1 = encoded_residue_dict[res]
+                    for aa in aas:
+                        if aa in self.alphabet:
+                            omit_AA_per_residue[i1, self.restype_str_to_int[aa]] = 1.0
 
         # Set bias in feature_dict following successful pattern
         feature_dict["bias"] = (
